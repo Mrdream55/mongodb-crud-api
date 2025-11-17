@@ -7,15 +7,23 @@ const bcrypt = require("bcrypt");
 const app = express();
 const PORT = 5000;
 
-const MONGODB_URI = "mongodb+srv://faustinocarlo990_db_user:Carlojosefaustino@faustino1.4iubbte.mongodb.net/users";
+// =======================
+// MongoDB URIs
+// =======================
+const USER_MONGODB_URI = "mongodb+srv://faustinocarlo990_db_user:Carlojosefaustino@faustino1.4iubbte.mongodb.net/users";
+const PRODUCT_MONGODB_URI = "mongodb+srv://faustinocarlo990_db_user:Carlojosefaustino@faustino1.4iubbte.mongodb.net/product";
 
+// =======================
 // Middleware
+// =======================
 app.use(cors());
 app.use(bodyParser.json());
 
+// =======================
 // User Schema
+// =======================
 const UserSchema = new mongoose.Schema({
-    name: { type: String, required: true, trim: true },
+    name: { type: String, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true }
 }, { timestamps: true });
@@ -30,15 +38,36 @@ UserSchema.pre("save", async function(next) {
 
 const User = mongoose.model("User", UserSchema);
 
-// Routes
-app.get("/", (req, res) => {
-    res.json({ message: "User API running", db: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected" });
+// =======================
+// Product Schema
+// =======================
+const ProductSchema = new mongoose.Schema({
+    name: String,
+    price: Number,
+    img: String
 });
+const Product = mongoose.model("Product", ProductSchema);
+
+// =======================
+// Routes
+// =======================
+
+// Root
+app.get("/", (req, res) => {
+    res.json({
+        message: "API running",
+        usersDB: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"
+    });
+});
+
+// -----------------------
+// USER ROUTES
+// -----------------------
 
 // Sign Up
 app.post("/api/users", async (req, res) => {
     const { name, email, password } = req.body;
-    if (!name || !email || !password) return res.status(400).json({ error: "All fields are required." });
+    if (!email || !password) return res.status(400).json({ error: "All fields are required." });
 
     try {
         const user = new User({ name, email, password });
@@ -68,10 +97,47 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
-// Connect DB and start server
-mongoose.connect(MONGODB_URI)
+// -----------------------
+// PRODUCT ROUTES
+// -----------------------
+
+// Get all products
+app.get("/api/products", async (req, res) => {
+    const products = await Product.find();
+    res.json(products);
+});
+
+// Add product
+app.post("/api/products", async (req, res) => {
+    const newProduct = new Product(req.body);
+    await newProduct.save();
+    res.json({ message: "Product Added", product: newProduct });
+});
+
+// Update product
+app.put("/api/products/:id", async (req, res) => {
+    await Product.findByIdAndUpdate(req.params.id, req.body);
+    res.json({ message: "Product Updated" });
+});
+
+// Delete product
+app.delete("/api/products/:id", async (req, res) => {
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ message: "Product Deleted" });
+});
+
+// =======================
+// Connect DB & Start Server
+// =======================
+
+mongoose.connect(USER_MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => {
-        console.log("✅ MongoDB connected");
+        console.log("✅ Users MongoDB connected");
+        // Connect products DB
+        return mongoose.createConnection(PRODUCT_MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    })
+    .then(() => {
+        console.log("✅ Products MongoDB connected");
         app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
     })
     .catch(err => console.error("❌ DB connection error:", err));
