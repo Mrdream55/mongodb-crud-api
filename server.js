@@ -5,10 +5,10 @@ const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 
 const app = express();
-const PORT = process.env.PORT || 5000; // Use environment port if available
+const PORT = 5000;
 
 // =======================
-// MongoDB URIs (Cloud)
+// MongoDB URIs
 // =======================
 const USER_MONGODB_URI = "mongodb+srv://faustinocarlo990_db_user:Carlojosefaustino@faustino1.4iubbte.mongodb.net/users";
 const PRODUCT_MONGODB_URI = "mongodb+srv://faustinocarlo990_db_user:Carlojosefaustino@faustino1.4iubbte.mongodb.net/product";
@@ -131,8 +131,13 @@ app.delete("/api/products/:id", async (req, res) => {
 // =======================
 
 mongoose.connect(USER_MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log("✅ Users MongoDB connected"))
     .then(() => {
-        app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+        console.log("✅ Users MongoDB connected");
+        // Connect products DB
+        return mongoose.createConnection(PRODUCT_MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+    })
+    .then(() => {
+        console.log("✅ Products MongoDB connected");
+        app.listen(PORT, () => console.log(`🚀 Server running on ${PORT}`));
     })
     .catch(err => console.error("❌ DB connection error:", err));
