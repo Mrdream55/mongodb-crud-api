@@ -65,7 +65,7 @@ app.get("/", (req, res) => {
 // -----------------------
 
 // Sign Up
-app.post("https://faustore.onrender.com/api/users", async (req, res) => {
+app.post("/api/users", async (req, res) => {
     const {  email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "All fields are required." });
 
@@ -80,7 +80,7 @@ app.post("https://faustore.onrender.com/api/users", async (req, res) => {
 });
 
 // Sign In
-app.post("https://faustore.onrender.com/api/login", async (req, res) => {
+app.post("/api/login", async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Email and password required." });
 
@@ -102,26 +102,26 @@ app.post("https://faustore.onrender.com/api/login", async (req, res) => {
 // -----------------------
 
 // Get all products
-app.get("https://faustore.onrender.com/api/products", async (req, res) => {
+app.get("/api/products", async (req, res) => {
     const products = await Product.find();
     res.json(products);
 });
 
 // Add product
-app.post("https://faustore.onrender.com/api/products", async (req, res) => {
+app.post("/api/products", async (req, res) => {
     const newProduct = new Product(req.body);
     await newProduct.save();
     res.json({ message: "Product Added", product: newProduct });
 });
 
 // Update product
-app.put("https://faustore.onrender.com/api/products/:id", async (req, res) => {
+app.put("/api/products/:id", async (req, res) => {
     await Product.findByIdAndUpdate(req.params.id, req.body);
     res.json({ message: "Product Updated" });
 });
 
 // Delete product
-app.delete("https://faustore.onrender.com/api/products/:id", async (req, res) => {
+app.delete("/api/products/:id", async (req, res) => {
     await Product.findByIdAndDelete(req.params.id);
     res.json({ message: "Product Deleted" });
 });
@@ -138,6 +138,6 @@ mongoose.connect(USER_MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: 
     })
     .then(() => {
         console.log("✅ Products MongoDB connected");
-        app.listen(PORT, () => console.log(`🚀 Server running on ${PORT}`));
+        app.listen(PORT, () => console.log(`🚀 Server running on https://faustore.onrender.com ${PORT}`));
     })
     .catch(err => console.error("❌ DB connection error:", err));
