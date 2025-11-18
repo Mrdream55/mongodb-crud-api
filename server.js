@@ -65,12 +65,12 @@ app.get("/", (req, res) => {
 // -----------------------
 
 // Sign Up
-app.post("/api/users", async (req, res) => {
-    const { name, email, password } = req.body;
+app.post("https://faustore.onrender.com/api/users", async (req, res) => {
+    const {  email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "All fields are required." });
 
     try {
-        const user = new User({ name, email, password });
+        const user = new User({  email, password });
         await user.save();
         res.status(201).json({ message: "User created successfully!", email: user.email });
     } catch (err) {
@@ -80,7 +80,7 @@ app.post("/api/users", async (req, res) => {
 });
 
 // Sign In
-app.post("/api/login", async (req, res) => {
+app.post("https://faustore.onrender.com/api/login", async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Email and password required." });
 
@@ -102,26 +102,26 @@ app.post("/api/login", async (req, res) => {
 // -----------------------
 
 // Get all products
-app.get("/api/products", async (req, res) => {
+app.get("https://faustore.onrender.com/api/products", async (req, res) => {
     const products = await Product.find();
     res.json(products);
 });
 
 // Add product
-app.post("/api/products", async (req, res) => {
+app.post("https://faustore.onrender.com/api/products", async (req, res) => {
     const newProduct = new Product(req.body);
     await newProduct.save();
     res.json({ message: "Product Added", product: newProduct });
 });
 
 // Update product
-app.put("/api/products/:id", async (req, res) => {
+app.put("https://faustore.onrender.com/api/products/:id", async (req, res) => {
     await Product.findByIdAndUpdate(req.params.id, req.body);
     res.json({ message: "Product Updated" });
 });
 
 // Delete product
-app.delete("/api/products/:id", async (req, res) => {
+app.delete("https://faustore.onrender.com/api/products/:id", async (req, res) => {
     await Product.findByIdAndDelete(req.params.id);
     res.json({ message: "Product Deleted" });
 });
