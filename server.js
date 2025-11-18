@@ -8,10 +8,9 @@ const app = express();
 const PORT = 5000;
 
 // =======================
-// MongoDB URIs
+// SINGLE DATABASE
 // =======================
-const USER_MONGODB_URI = "mongodb+srv://faustinocarlo990_db_user:Carlojosefaustino@faustino1.4iubbte.mongodb.net/users";
-const PRODUCT_MONGODB_URI = "mongodb+srv://faustinocarlo990_db_user:Carlojosefaustino@faustino1.4iubbte.mongodb.net/product";
+const MONGODB_URI = "mongodb+srv://faustinocarlo990_db_user:Carlojosefaustino@faustino1.4iubbte.mongodb.net/faustore";
 
 // =======================
 // Middleware
@@ -28,7 +27,6 @@ const UserSchema = new mongoose.Schema({
     password: { type: String, required: true }
 }, { timestamps: true });
 
-// Hash password before saving
 UserSchema.pre("save", async function(next) {
     if (!this.isModified("password")) return next();
     const salt = await bcrypt.genSalt(10);
@@ -56,21 +54,19 @@ const Product = mongoose.model("Product", ProductSchema);
 app.get("/", (req, res) => {
     res.json({
         message: "API running",
-        usersDB: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"
+        dbStatus: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"
     });
 });
 
 // -----------------------
 // USER ROUTES
 // -----------------------
-
-// Sign Up
 app.post("/api/users", async (req, res) => {
-    const {  email, password } = req.body;
+    const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "All fields are required." });
 
     try {
-        const user = new User({  email, password });
+        const user = new User({ email, password });
         await user.save();
         res.status(201).json({ message: "User created successfully!", email: user.email });
     } catch (err) {
@@ -79,7 +75,6 @@ app.post("/api/users", async (req, res) => {
     }
 });
 
-// Sign In
 app.post("/api/login", async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Email and password required." });
@@ -100,44 +95,51 @@ app.post("/api/login", async (req, res) => {
 // -----------------------
 // PRODUCT ROUTES
 // -----------------------
-
-// Get all products
 app.get("/api/products", async (req, res) => {
-    const products = await Product.find();
-    res.json(products);
+    try {
+        const products = await Product.find();
+        res.json(products);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Add product
 app.post("/api/products", async (req, res) => {
-    const newProduct = new Product(req.body);
-    await newProduct.save();
-    res.json({ message: "Product Added", product: newProduct });
+    try {
+        const newProduct = new Product(req.body);
+        await newProduct.save();
+        res.status(201).json({ message: "Product Added", product: newProduct });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Update product
 app.put("/api/products/:id", async (req, res) => {
-    await Product.findByIdAndUpdate(req.params.id, req.body);
-    res.json({ message: "Product Updated" });
+    try {
+        const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedProduct) return res.status(404).json({ error: "Product not found" });
+        res.json({ message: "Product Updated", product: updatedProduct });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Delete product
 app.delete("/api/products/:id", async (req, res) => {
-    await Product.findByIdAndDelete(req.params.id);
-    res.json({ message: "Product Deleted" });
+    try {
+        const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+        if (!deletedProduct) return res.status(404).json({ error: "Product not found" });
+        res.json({ message: "Product Deleted" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // =======================
 // Connect DB & Start Server
 // =======================
-
-mongoose.connect(USER_MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => {
-        console.log("✅ Users MongoDB connected");
-        // Connect products DB
-        return mongoose.createConnection(PRODUCT_MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-    })
-    .then(() => {
-        console.log("✅ Products MongoDB connected");
-        app.listen(PORT, () => console.log(`🚀 Server running on https://faustore.onrender.com ${PORT}`));
+        console.log("✅ MongoDB connected");
+        app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
     })
     .catch(err => console.error("❌ DB connection error:", err));
